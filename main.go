@@ -1,8 +1,10 @@
 package main
 
 import (
-	"os"
 	"fmt"
+	"image/jpeg"
+	"image/png"
+	"os"
 	"path/filepath"
 )
 
@@ -34,13 +36,41 @@ func main() {
 		os.Exit(1)
 	}
 
-	filepath.Walk(path, func (path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			if ext := filepath.Ext(path); ext == ".jpg" || ext == ".jpeg" {
-				fmt.Println(path)
+	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+
+		if ext := filepath.Ext(path); ext == ".jpg" || ext == ".jpeg" {
+			f, err := os.Open(path)
+			defer f.Close()
+			if err != nil {
+				return err
 			}
+
+			img, err := jpeg.Decode(f)
+			if err != nil {
+				return err
+			}
+
+			pngFilePath := path[0:len(path)-len(ext)] + ".png"
+			pngFile, err := os.Create(pngFilePath)
+			defer pngFile.Close()
+			if err != nil {
+				return err
+			}
+
+			if err = png.Encode(pngFile, img); err != nil {
+				return err
+			}
+			fmt.Println("created: " + pngFilePath)
 		}
 
 		return nil
 	})
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
