@@ -1,5 +1,11 @@
 package main
 
+import (
+	"os"
+	"fmt"
+	"path/filepath"
+)
+
 /**
 https://docs.google.com/presentation/d/1-20sWsmtmoFrHbmsuqIzSkfQKZn7Cdj1fuNmV1Btq0o/edit#slide=id.g37c8886736_0_1079
 
@@ -18,5 +24,23 @@ https://docs.google.com/presentation/d/1-20sWsmtmoFrHbmsuqIzSkfQKZn7Cdj1fuNmV1Bt
 */
 
 func main() {
-	println("go")
+	path := os.Args[1]
+
+	if len(os.Args) < 2 {
+		os.Exit(1)
+	}
+
+	if path == "" {
+		os.Exit(1)
+	}
+
+	filepath.Walk(path, func (path string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			if ext := filepath.Ext(path); ext == ".jpg" || ext == ".jpeg" {
+				fmt.Println(path)
+			}
+		}
+
+		return nil
+	})
 }
