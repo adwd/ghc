@@ -54,15 +54,38 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println(*inputFormat)
-
 	decoder, ok := decoders[*inputFormat]
 	if !ok {
 		fmt.Println("invalid format")
 		os.Exit(1)
 	}
 
-	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+	encoder, err := func() (Encoder, error) {
+		switch *outputFormat {
+		case "jpeg":
+			fallthrough
+		case "jpg":
+			return func(w io.Writer, img image.Image) error {
+				return jpeg.Encode(w, img, nil)
+			}, nil
+		case "png":
+			return png.Encode, nil
+		case "gif":
+			return func(w io.Writer, img image.Image) error {
+				return gif.Encode(w, img, nil)
+			}, nil
+		default:
+			return nil, fmt.Errorf("error")
+		}
+	}()
+	if err != nil {
+		fmt.Println("invalid output format")
+		os.Exit(1)
+	}
+
+	fmt.Printf("convert %s file to %s\n", *inputFormat, *outputFormat)
+
+	err = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
@@ -79,14 +102,14 @@ func main() {
 				return err
 			}
 
-			pngFilePath := path[0:len(path)-len(ext)] + ".png"
+			pngFilePath := path[0:len(path)-len(ext)] + "." + *outputFormat
 			pngFile, err := os.Create(pngFilePath)
 			defer pngFile.Close()
 			if err != nil {
 				return err
 			}
 
-			if err = png.Encode(pngFile, img); err != nil {
+			if err = encoder(pngFile, img); err != nil {
 				return err
 			}
 			fmt.Println("created: " + pngFilePath)
