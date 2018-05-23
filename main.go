@@ -1,9 +1,13 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"image"
+	"image/gif"
 	"image/jpeg"
 	"image/png"
+	"io"
 	"os"
 	"path/filepath"
 )
@@ -25,14 +29,36 @@ https://docs.google.com/presentation/d/1-20sWsmtmoFrHbmsuqIzSkfQKZn7Cdj1fuNmV1Bt
 - GoDocを生成してみる
 */
 
-func main() {
-	path := os.Args[1]
+type Decoder = func(r io.Reader) (image.Image, error)
+type Encoder = func(w io.Writer, img image.Image) error
 
-	if len(os.Args) < 2 {
+var decoders = map[string]Decoder{
+	"jpeg": jpeg.Decode,
+	"jpg":  jpeg.Decode,
+	"png":  png.Decode,
+	"gif":  gif.Decode,
+}
+
+var inputFormat = flag.String("in", "jpg", "使い方")
+var outputFormat = flag.String("out", "png", "使い方")
+
+func main() {
+	flag.Parse()
+	path := flag.Args()[0]
+
+	if len(flag.Args()) < 1 {
 		os.Exit(1)
 	}
 
 	if path == "" {
+		os.Exit(1)
+	}
+
+	fmt.Println(*inputFormat)
+
+	decoder, ok := decoders[*inputFormat]
+	if !ok {
+		fmt.Println("invalid format")
 		os.Exit(1)
 	}
 
@@ -41,14 +67,14 @@ func main() {
 			return nil
 		}
 
-		if ext := filepath.Ext(path); ext == ".jpg" || ext == ".jpeg" {
+		if ext := filepath.Ext(path); ext == "."+*inputFormat {
 			f, err := os.Open(path)
 			defer f.Close()
 			if err != nil {
 				return err
 			}
 
-			img, err := jpeg.Decode(f)
+			img, err := decoder(f)
 			if err != nil {
 				return err
 			}
