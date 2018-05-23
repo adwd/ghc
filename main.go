@@ -3,13 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"image"
-	"image/gif"
-	"image/jpeg"
-	"image/png"
-	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/adwd/ghc/decoder"
+	"github.com/adwd/ghc/encoder"
 )
 
 /**
@@ -29,16 +27,6 @@ https://docs.google.com/presentation/d/1-20sWsmtmoFrHbmsuqIzSkfQKZn7Cdj1fuNmV1Bt
 - GoDocを生成してみる
 */
 
-type Decoder = func(r io.Reader) (image.Image, error)
-type Encoder = func(w io.Writer, img image.Image) error
-
-var decoders = map[string]Decoder{
-	"jpeg": jpeg.Decode,
-	"jpg":  jpeg.Decode,
-	"png":  png.Decode,
-	"gif":  gif.Decode,
-}
-
 var inputFormat = flag.String("in", "jpg", "使い方")
 var outputFormat = flag.String("out", "png", "使い方")
 
@@ -54,32 +42,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	decoder, ok := decoders[*inputFormat]
-	if !ok {
-		fmt.Println("invalid format")
+	decoder, err := decoder.SelectDecoder(*inputFormat)
+	if err != nil {
 		os.Exit(1)
 	}
 
-	encoder, err := func() (Encoder, error) {
-		switch *outputFormat {
-		case "jpeg":
-			fallthrough
-		case "jpg":
-			return func(w io.Writer, img image.Image) error {
-				return jpeg.Encode(w, img, nil)
-			}, nil
-		case "png":
-			return png.Encode, nil
-		case "gif":
-			return func(w io.Writer, img image.Image) error {
-				return gif.Encode(w, img, nil)
-			}, nil
-		default:
-			return nil, fmt.Errorf("error")
-		}
-	}()
+	encoder, err := encoder.SelectEncoder(*outputFormat)
 	if err != nil {
-		fmt.Println("invalid output format")
 		os.Exit(1)
 	}
 
