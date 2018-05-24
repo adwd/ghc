@@ -61,10 +61,10 @@ func main() {
 
 		if ext := filepath.Ext(path); ext == "."+*inputFormat {
 			f, err := os.Open(path)
-			defer f.Close()
 			if err != nil {
 				return err
 			}
+			defer f.Close()
 
 			img, err := decoder(f)
 			if err != nil {
@@ -73,10 +73,10 @@ func main() {
 
 			pngFilePath := path[0:len(path)-len(ext)] + "." + *outputFormat
 			pngFile, err := os.Create(pngFilePath)
-			defer pngFile.Close()
 			if err != nil {
 				return err
 			}
+			defer pngFile.Close()
 
 			if err = encoder(pngFile, img); err != nil {
 				return err
