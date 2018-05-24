@@ -13,9 +13,7 @@ type Encoder = func(w io.Writer, img image.Image) error
 
 func SelectEncoder(format string) (Encoder, error) {
 	switch format {
-	case "jpeg":
-		fallthrough
-	case "jpg":
+	case "jpeg", "jpg":
 		return func(w io.Writer, img image.Image) error {
 			return jpeg.Encode(w, img, nil)
 		}, nil
