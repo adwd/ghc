@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/adwd/ghc/decoder"
-	"github.com/adwd/ghc/encoder"
+	"github.com/adwd/gopherDojo/ghc/decoder"
+	"github.com/adwd/gopherDojo/ghc/encoder"
 )
 
 /**
